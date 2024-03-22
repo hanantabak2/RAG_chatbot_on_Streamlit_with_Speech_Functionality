@@ -46,26 +46,16 @@ def load_document(file):
         data += temp_text 
         
     elif extension == '.docx':
+        from langchain.document_loaders import Docx2txtLoader
         print(f'Loading {file}')
-        data = ''
-        docs_reader = Docx2txtLoader(file)
-        temp_text = ''
-        for i, page in enumerate(docs_reader.pages):
-            text = page.extract_text()
-            if text:
-                temp_text += text
-        data += temp_text 
+        loader = Docx2txtLoader(file)
+        data = loader.load()
         
     elif extension == '.txt':
-        print(f'Loading {file}')
-        data = ''
-        txt_reader = TextLoader(file)
-        temp_text = ''
-        for i, page in enumerate(txt_reader.pages):
-            text = page.extract_text()
-            if text:
-                temp_text += text
-        data += temp_text 
+        from langchain.document_loaders import TextLoader
+        loader = TextLoader(file)
+        data = loader.load()
+        
     else:
         print('Document format is not supported!')
         return None
