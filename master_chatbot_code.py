@@ -71,8 +71,20 @@ def load_document(file):
 
 # Splitting the data into chunks
 def chunk_data(data, chunk_size=1000, chunk_overlap=20):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    chunks = text_splitter.split_text(data)
+        name, extension = os.path.splitext(file)
+    if extension == '.pdf':
+       text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+       chunks = text_splitter.split_text(data)
+
+    elif extension == '.docx':
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        chunks = text_splitter.split_documents(data)
+
+    elif extension == '.txt':
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        chunks = text_splitter.split_documents(data)
+        
+    
     return chunks
 
 
