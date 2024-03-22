@@ -1,0 +1,14 @@
+pip
+openai
+langchain
+streamlit
+python-dotenv
+pypdf
+chromadb
+langchain-community
+pysqlite3-binary
+tiktoken
+docx2txt
+PyPDF2 
+PdfReader
+faiss-gpu
