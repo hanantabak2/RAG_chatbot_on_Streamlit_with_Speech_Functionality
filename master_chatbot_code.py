@@ -90,10 +90,9 @@ def chunk_data(file,data, chunk_size=1000, chunk_overlap=20):
 
 # create embeddings using OpenAIEmbeddings() and save them in a FAISS vector store
 def create_embeddings(file,chunks):
-    
+    embeddings = OpenAIEmbeddings()
     name, extension = os.path.splitext(file)
     if extension == '.pdf':
-        embeddings = OpenAIEmbeddings()
         vector_store = FAISS.from_texts(chunks, embeddings)
 
     elif extension == '.docx':
