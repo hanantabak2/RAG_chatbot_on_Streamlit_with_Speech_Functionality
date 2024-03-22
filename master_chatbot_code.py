@@ -150,7 +150,7 @@ if __name__ == "__main__":
     except :   
         image_url = "ai_logo.png"
         st.sidebar.image(image_url, caption="", use_column_width=True)
-    st.subheader(':violet[Chat With Your Documents - AI Chatbot] ')
+    st.subheader(":violet[Chat With Your Documents - AI Chatbot] ")
     with st.sidebar:
         
         # text_input for the OpenAI API key (alternative to python-dotenv and .env)
