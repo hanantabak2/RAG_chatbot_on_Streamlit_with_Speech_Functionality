@@ -1,4 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 22 11:45:42 2024
+
+@author: Hanan Tabak
+"""
+
+"""
+Import libraries
+"""
 import streamlit as st
+import os
 import langchain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -7,14 +18,21 @@ from langchain_core.prompts import PromptTemplate
 from io import BytesIO
 from openai import OpenAI
 from PyPDF2 import PdfReader
+from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import TextLoader
+from langchain.chains import RetrievalQA
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from dotenv import load_dotenv, find_dotenv
+from langchain.chat_models import ChatOpenAI
 
-# loading PDF, DOCX and TXT files as LangChain Documents
+#------------------------------------------------------------------------------------------------------------------
+"""
+loading PDF, DOCX and TXT files as LangChain Documents
+"""
 def load_document(file):
-    import os
     name, extension = os.path.splitext(file)
 
     if extension == '.pdf':
-        # from langchain.document_loaders import PyPDFLoader
         print(f'Loading {file}')
         data = ''
         pdf_reader = PdfReader(file)
@@ -24,8 +42,8 @@ def load_document(file):
             if text:
                 temp_text += text
         data += temp_text 
+        
     elif extension == '.docx':
-        from langchain.document_loaders import Docx2txtLoader
         print(f'Loading {file}')
         data = ''
         docs_reader = Docx2txtLoader(file)
@@ -35,8 +53,8 @@ def load_document(file):
             if text:
                 temp_text += text
         data += temp_text 
+        
     elif extension == '.txt':
-        from langchain.document_loaders import TextLoader
         print(f'Loading {file}')
         data = ''
         txt_reader = TextLoader(file)
@@ -53,26 +71,29 @@ def load_document(file):
 
     return data
 
+#------------------------------------------------------------------------------------------------------------------
 
-# splitting data in chunks
+"""
+splitting data in chunks, embedding them, and generate the answer
+
+"""
+
+# Splitting the data into chunks
 def chunk_data(data, chunk_size=1000, chunk_overlap=20):
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     chunks = text_splitter.split_text(data)
     return chunks
 
 
-# create embeddings using OpenAIEmbeddings() and save them in a Chroma vector store
+# create embeddings using OpenAIEmbeddings() and save them in a FAISS vector store
 def create_embeddings(chunks):
     embeddings = OpenAIEmbeddings()
     vector_store = FAISS.from_texts(chunks, embeddings)
     return vector_store
 
 
+# Design the prompt template and use it to sandwitch the input question, then generate the answer
 def ask_and_get_answer(vector_store, q, k=3):
-    from langchain.chains import RetrievalQA
-    from langchain.chat_models import ChatOpenAI
-
     llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=0)
     retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': k})
     # Create Prompt
@@ -91,6 +112,11 @@ def ask_and_get_answer(vector_store, q, k=3):
     answer = chain({"query":q,"context":retriever})
     return answer
 
+#------------------------------------------------------------------------------------------------------------------
+
+"""
+Background Image
+"""
 page_bg_img = '''
 <style>
 .stApp  {
@@ -102,6 +128,10 @@ background-size: cover;
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 
+"""
+Streamlit process : Clear history, import OpenAI key, add logo image, upload the files
+"""
+
 # clear the chat history from streamlit session state
 def clear_history():
     if 'history' in st.session_state:
@@ -109,13 +139,11 @@ def clear_history():
 
 
 if __name__ == "__main__":
-    import os
 
     # loading the OpenAI api key from .env
-    from dotenv import load_dotenv, find_dotenv
     load_dotenv(find_dotenv(), override=True)
 
-    # st.title("Gen AI based Insight Generator")
+    # Title and logo
     try :
         image_url = "logo-new.png"
         st.sidebar.image(image_url, caption="", use_column_width=True)
@@ -124,6 +152,7 @@ if __name__ == "__main__":
         st.sidebar.image(image_url, caption="", use_column_width=True)
     st.subheader(':violet[Chat With Your Documents - AI Chatbot] ')
     with st.sidebar:
+        
         # text_input for the OpenAI API key (alternative to python-dotenv and .env)
         api_key = st.text_input('OpenAI API Key:', type='password')
         if api_key:
@@ -139,7 +168,7 @@ if __name__ == "__main__":
         k = 3
 
         # add data button widget
-        add_data = st.button('Add Data', on_click=clear_history)
+        add_data = st.button('Load Data', on_click=clear_history)
 
         if uploaded_file and add_data: # if the user browsed a file
             with st.spinner('Reading, chunking and embedding file ...'):
@@ -152,12 +181,6 @@ if __name__ == "__main__":
 
                 data = load_document(file_name)
                 chunks = chunk_data(data, chunk_size=chunk_size)
-                # st.write(f'Chunk size: {chunk_size}, Chunks: {len(chunks)}')
-
-# =============================================================================
-#                 tokens, embedding_cost = calculate_embedding_cost(chunks)
-#                 st.write(f'Embedding cost: ${embedding_cost:.4f}')
-# =============================================================================
 
                 # creating the embeddings and returning the Chroma vector store
                 vector_store = create_embeddings(chunks)
@@ -168,18 +191,17 @@ if __name__ == "__main__":
 
     # user's question text input widget
     q = st.text_input('Ask a question about the content of your file:')
+    
     if q: # if the user entered a question and hit enter
-    #     standard_answer = "Answer only based on the text you received as input. Don't search external sources. " \
-    #                       "If you can't answer then return `I DONT KNOW`."
-    #     q = f"{q} {standard_answer}"
-        if 'vs' in st.session_state: # if there's the vector store (user uploaded, split and embedded a file)
+        if 'vs' in st.session_state: # if there's a vector store (user uploaded, split and embedded a file)
             vector_store = st.session_state.vs
-            # st.write(f'k: {k}')
             
             answer = ask_and_get_answer(vector_store, q, k)
     
             # text area widget for the LLM answer
-            st.text_area('LLM Answer: ', value=answer["result"])
+            st.text_area('LLM Answer: ', value=answer["result"], height=400)
+            
+            # Audio area widget for the TTS part
             sound_file = BytesIO()
             client = OpenAI()
             response = client.audio.speech.create(
@@ -202,5 +224,3 @@ if __name__ == "__main__":
     
             # text area widget for the chat history
             st.text_area(label='Chat History', value=h, key='history', height=400)
-
-# run the app: streamlit run ./chat_with_documents.py
