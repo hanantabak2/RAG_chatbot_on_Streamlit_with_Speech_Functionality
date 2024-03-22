@@ -89,9 +89,19 @@ def chunk_data(file,data, chunk_size=1000, chunk_overlap=20):
 
 
 # create embeddings using OpenAIEmbeddings() and save them in a FAISS vector store
-def create_embeddings(chunks):
+def create_embeddings(file,chunks):
+    
+    name, extension = os.path.splitext(file)
+    if extension == '.pdf':
     embeddings = OpenAIEmbeddings()
     vector_store = FAISS.from_texts(chunks, embeddings)
+
+    elif extension == '.docx':
+    vector_store = Chroma.from_documents(chunks, embeddings)
+
+     elif extension == '.txt':
+    vector_store = Chroma.from_documents(chunks, embeddings)
+
     return vector_store
 
 
@@ -188,7 +198,7 @@ if __name__ == "__main__":
                 chunks = chunk_data(file_name,data, chunk_size=chunk_size)
 
                 # creating the embeddings and returning the Chroma vector store
-                vector_store = create_embeddings(chunks)
+                vector_store = create_embeddings(file_name,chunks)
 
                 # saving the vector store in the streamlit session state (to be persistent between reruns)
                 st.session_state.vs = vector_store
