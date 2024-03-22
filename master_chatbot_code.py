@@ -46,13 +46,11 @@ def load_document(file):
         data += temp_text 
         
     elif extension == '.docx':
-        from langchain.document_loaders import Docx2txtLoader
         print(f'Loading {file}')
         loader = Docx2txtLoader(file)
         data = loader.load()
         
     elif extension == '.txt':
-        from langchain.document_loaders import TextLoader
         loader = TextLoader(file)
         data = loader.load()
         
