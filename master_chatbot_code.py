@@ -94,7 +94,7 @@ def ask_and_get_answer(vector_store, q, k=3):
 page_bg_img = '''
 <style>
 .stApp  {
-background-image: url("ai_bg.png");
+background-image: url("ai_bg.jpg");
 background-size: cover;
 }
 </style>
