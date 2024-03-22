@@ -118,7 +118,7 @@ def ask_and_get_answer(vector_store, q, k=3):
 page_bg_img = '''
 <style>
 .stApp  {
-background-image: url("https://img.freepik.com/free-vector/realistic-style-technology-particle-background_23-2148426704.jpg");
+background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url("https://img.freepik.com/free-vector/realistic-style-technology-particle-background_23-2148426704.jpg");
 background-size: cover;
 }
 </style>
