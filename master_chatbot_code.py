@@ -91,22 +91,10 @@ def ask_and_get_answer(vector_store, q, k=3):
     answer = chain({"query":q,"context":retriever})
     return answer
 
-
-# calculate embedding cost using tiktoken
-# =============================================================================
-# def calculate_embedding_cost(texts):
-#     import tiktoken
-#     enc = tiktoken.encoding_for_model('text-embedding-ada-002')
-#     total_tokens = sum([len(enc.encode(page.page_content)) for page in texts])
-#     # print(f'Total Tokens: {total_tokens}')
-#     # print(f'Embedding Cost in USD: {total_tokens / 1000 * 0.0004:.6f}')
-#     return total_tokens, total_tokens / 1000 * 0.0004
-# =============================================================================
-
 page_bg_img = '''
 <style>
 .stApp  {
-background-image: url("https://www.eand.com/content/dam/eand/assets/images/innovate1024_768.jpg");
+background-image: url("ai_bg.jfif");
 background-size: cover;
 }
 </style>
@@ -132,7 +120,7 @@ if __name__ == "__main__":
         image_url = "logo-new.png"
         st.sidebar.image(image_url, caption="", use_column_width=True)
     except :   
-        image_url = "https://logos-world.net/wp-content/uploads/2023/04/Etisalat-Logo.png"
+        image_url = "ai_logo.png"
         st.sidebar.image(image_url, caption="", use_column_width=True)
     st.subheader('e& - Chat With Your Documents - AI Chatbot ')
     with st.sidebar:
