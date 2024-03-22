@@ -70,7 +70,7 @@ def load_document(file):
 #=================
 
 # Splitting the data into chunks
-def chunk_data(data, chunk_size=1000, chunk_overlap=20):
+def chunk_data(file,data, chunk_size=1000, chunk_overlap=20):
     name, extension = os.path.splitext(file)
     if extension == '.pdf':
        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
                     f.write(bytes_data)
 
                 data = load_document(file_name)
-                chunks = chunk_data(data, chunk_size=chunk_size)
+                chunks = chunk_data(file_name,data, chunk_size=chunk_size)
 
                 # creating the embeddings and returning the Chroma vector store
                 vector_store = create_embeddings(chunks)
