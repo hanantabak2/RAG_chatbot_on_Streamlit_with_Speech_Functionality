@@ -98,10 +98,12 @@ def ask_and_get_answer(vector_store, q, k=3):
     llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=0)
     retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': k})
     # Create Prompt
-    template = """Use the pieces of context in the document to answer the question at the end. 
-    If you don't know the answer, just say that you don't know in a professional way.
-    Don't try to make up an answer.
-    Respond in the persona of business AI consultant  
+    template = """1- Understand the context of the document first to answer the question at the end. 
+    2- If you don't know the answer, just say that you don't know in a professional way.
+    3- Don't try to make up an answer.
+    4- Respond in the persona of business AI consultant 
+    5- Include the page number from which you retreived your content from between parentheses at the tail of the answer.
+   
     {context}
     Question: {question}
     Answer: 
