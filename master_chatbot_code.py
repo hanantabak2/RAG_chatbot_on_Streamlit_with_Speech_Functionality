@@ -93,14 +93,14 @@ def create_embeddings(file,chunks):
     
     name, extension = os.path.splitext(file)
     if extension == '.pdf':
-    embeddings = OpenAIEmbeddings()
-    vector_store = FAISS.from_texts(chunks, embeddings)
+        embeddings = OpenAIEmbeddings()
+        vector_store = FAISS.from_texts(chunks, embeddings)
 
     elif extension == '.docx':
-    vector_store = Chroma.from_documents(chunks, embeddings)
+        vector_store = Chroma.from_documents(chunks, embeddings)
 
      elif extension == '.txt':
-    vector_store = Chroma.from_documents(chunks, embeddings)
+        vector_store = Chroma.from_documents(chunks, embeddings)
 
     return vector_store
 
