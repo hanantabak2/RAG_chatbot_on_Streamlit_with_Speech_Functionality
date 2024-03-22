@@ -96,10 +96,10 @@ def create_embeddings(file,chunks):
         vector_store = FAISS.from_texts(chunks, embeddings)
 
     elif extension == '.docx':
-        vector_store = Chroma.from_documents(chunks, embeddings)
+        vector_store = FAISS.from_documents(chunks, embeddings)
 
     elif extension == '.txt':
-        vector_store = Chroma.from_documents(chunks, embeddings)
+        vector_store = FAISS.from_documents(chunks, embeddings)
 
     return vector_store
 
