@@ -5,9 +5,9 @@ Created on Fri Mar 22 11:45:42 2024
 @author: Hanan Tabak
 """
 
-"""
+'''
 Import libraries
-"""
+'''
 import streamlit as st
 import os
 import langchain
@@ -26,9 +26,9 @@ from dotenv import load_dotenv, find_dotenv
 from langchain.chat_models import ChatOpenAI
 
 #------------------------------------------------------------------------------------------------------------------
-"""
+'''
 loading PDF, DOCX and TXT files as LangChain Documents
-"""
+'''
 def load_document(file):
     name, extension = os.path.splitext(file)
 
@@ -73,10 +73,10 @@ def load_document(file):
 
 #------------------------------------------------------------------------------------------------------------------
 
-"""
+'''
 splitting data in chunks, embedding them, and generate the answer
 
-"""
+'''
 
 # Splitting the data into chunks
 def chunk_data(data, chunk_size=1000, chunk_overlap=20):
@@ -114,9 +114,9 @@ def ask_and_get_answer(vector_store, q, k=3):
 
 #------------------------------------------------------------------------------------------------------------------
 
-"""
+'''
 Background Image
-"""
+'''
 page_bg_img = '''
 <style>
 .stApp  {
@@ -128,9 +128,9 @@ background-size: cover;
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 
-"""
+'''
 Streamlit process : Clear history, import OpenAI key, add logo image, upload the files
-"""
+'''
 
 # clear the chat history from streamlit session state
 def clear_history():
