@@ -99,7 +99,7 @@ def create_embeddings(file,chunks):
     elif extension == '.docx':
         vector_store = Chroma.from_documents(chunks, embeddings)
 
-     elif extension == '.txt':
+    elif extension == '.txt':
         vector_store = Chroma.from_documents(chunks, embeddings)
 
     return vector_store
