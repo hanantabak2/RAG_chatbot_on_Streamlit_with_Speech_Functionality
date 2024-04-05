@@ -1,133 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Mar 22 11:45:42 2024
+Spyder Editor
 
-@author: Hanan Tabak
+This is a temporary script file.
 """
+# This is the main file combining features of csv, pdfs and text
 
-#=================
-# Import libraries
-#=================
 import streamlit as st
+import pandas as pd
 import os
-import langchain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
-from io import BytesIO
+# from statsmodels.tsa.arima_model import ARIMA
+# import statsmodels.api as sm
+from langchain_experimental.agents.agent_toolkits.csv.base import create_csv_agent
+# from langchain.llms import OpenAI
 from openai import OpenAI
+from langchain.document_loaders import PyPDFLoader
 from PyPDF2 import PdfReader
-from langchain.document_loaders import Docx2txtLoader
-from langchain.document_loaders import TextLoader
+from langchain.vectorstores import FAISS
+from langchain.text_splitter import CharacterTextSplitter
+# from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chains.question_answering import load_qa_chain
 from langchain.chains import RetrievalQA
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from dotenv import load_dotenv, find_dotenv
 from langchain.chat_models import ChatOpenAI
-
-#------------------------------------------------------------------------------------------------------------------
-
+from langchain.agents import initialize_agent
+from langchain.agents import AgentType
+from langchain.agents import Tool
+from langchain.embeddings import HuggingFaceEmbeddings
+from io import BytesIO
 #=================
-# loading PDF, DOCX and TXT files as LangChain Documents
-#=================
-
-def load_document(file):
-    name, extension = os.path.splitext(file)
-
-    if extension == '.pdf':
-        print(f'Loading {file}')
-        data = ''
-        pdf_reader = PdfReader(file)
-        temp_text = ''
-        for i, page in enumerate(pdf_reader.pages):
-            text = page.extract_text()
-            if text:
-                temp_text += text
-        data += temp_text 
-        
-    elif extension == '.docx':
-        print(f'Loading {file}')
-        loader = Docx2txtLoader(file)
-        data = loader.load()
-        
-    elif extension == '.txt':
-        loader = TextLoader(file)
-        data = loader.load()
-        
-    else:
-        print('Document format is not supported!')
-        return None
-
-
-    return data
-
-#------------------------------------------------------------------------------------------------------------------
-
-#=================
-# splitting data in chunks, embedding them, and generate the answer
-#=================
-
-# Splitting the data into chunks
-def chunk_data(file,data, chunk_size=1000, chunk_overlap=20):
-    name, extension = os.path.splitext(file)
-    if extension == '.pdf':
-       text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-       chunks = text_splitter.split_text(data)
-
-    elif extension == '.docx':
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        chunks = text_splitter.split_documents(data)
-
-    elif extension == '.txt':
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        chunks = text_splitter.split_documents(data)
-        
-    
-    return chunks
-
-
-# create embeddings using OpenAIEmbeddings() and save them in a FAISS vector store
-def create_embeddings(file,chunks):
-    embeddings = OpenAIEmbeddings()
-    name, extension = os.path.splitext(file)
-    if extension == '.pdf':
-        vector_store = FAISS.from_texts(chunks, embeddings)
-
-    elif extension == '.docx':
-        vector_store = FAISS.from_documents(chunks, embeddings)
-
-    elif extension == '.txt':
-        vector_store = FAISS.from_documents(chunks, embeddings)
-
-    return vector_store
-
-
-# Design the prompt template and use it to sandwitch the input question, then generate the answer
-def ask_and_get_answer(vector_store, q, k=3):
-    llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=0)
-    retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': k})
-    # Create Prompt
-    template = """1- Understand the context of the document first to answer the question at the end. 
-    2- If you don't know the answer, just say that you don't know in a professional way.
-    3- Don't try to make up an answer.
-    4- Respond in the persona of business AI consultant 
-    5- Include the page number from which you retreived your content from between parentheses at the tail of the answer.
-   
-    {context}
-    Question: {question}
-    Answer: 
-    """
-
-    prompt = PromptTemplate(input_variables=["context","question"], template=template)
-    chain = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever,chain_type_kwargs={"prompt": prompt})
-
-    answer = chain({"query":q,"context":retriever})
-    return answer
-
-#------------------------------------------------------------------------------------------------------------------
-
-#=================
-# Background Image
+# Background Image , Chatbot Title and Logo
 #=================
 
 page_bg_img = '''
@@ -140,99 +41,267 @@ background-size: cover;
 '''
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
+
+st.title("Gen AI based Insight Generator")
+try :
+    image_url = "logo-new.png"
+    st.sidebar.image(image_url, caption="", use_column_width=True)
+except :   
+    image_url = "ai_logo.png"
+    st.sidebar.image(image_url, caption="", use_column_width=True)
+
 #=================
-# Streamlit process : Clear history, import OpenAI key, add logo image, upload the files
+# API Key and Files Upload
+#=================
+openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+os.environ["OPENAI_API_KEY"] = openai_api_key
+
+
+file_format = st.sidebar.selectbox("Select File Format", ["CSV", "PDF", "TXT"])
+if file_format == "TXT" :
+    file_format = "plain"
+
+uploaded_files = st.sidebar.file_uploader("Upload a file", type=["csv", "txt", "pdf"], accept_multiple_files=True)
+
+
+def validateFormat(file_format,uploaded_files) :
+    for file in uploaded_files :
+        if str(file_format).lower() not in str(file.type).lower():
+          return False
+    return True
+
+
+def selectPDFAnalysis() :
+        type_pdf = st.selectbox("Select Anaylsis Type on PDFs", ["Compare","Merge"])
+
+        if type_pdf=="Compare" :
+           st.write("Analysis Comparing PDFs")
+           return "Compare"
+        else :
+           st.write("Analysis Merging PDFs")  
+           return "Merge"
+
+def save_uploadedfile(uploadedfile):
+     with open(os.path.join(uploadedfile.name),"wb") as f:
+         f.write(uploadedfile.getbuffer())
+     return st.success("Saved File")           
+
+
+#=================
+# Answer Generation Functions Based on Uploaded File Format
 #=================
 
-# clear the chat history from streamlit session state
-def clear_history():
-    if 'history' in st.session_state:
-        del st.session_state['history']
 
 
-if __name__ == "__main__":
+def history_func(answer,q):     
+    # if there's no chat history in the session state, create it     
+    if 'history' not in st.session_state:
+        st.session_state.history = ''
 
-    # loading the OpenAI api key from .env
-    load_dotenv(find_dotenv(), override=True)
+    # the current question and answer
+    value = f'Q: {q} \nA: {answer}'
 
-    # Title and logo
-    try :
-        image_url = "logo-new.png"
-        st.sidebar.image(image_url, caption="", use_column_width=True)
-    except :   
-        image_url = "ai_logo.png"
-        st.sidebar.image(image_url, caption="", use_column_width=True)
-    st.subheader("Chat With Your Documents - AI Chatbot")
-    with st.sidebar:
+    st.session_state.history = f'{value} \n {"-" * 100} \n {st.session_state.history}'
+    h = st.session_state.history
+
+    # text area widget for the chat history
+    st.text_area(label='Chat History', value=h, key='history', height=400)
+    
+    
+def CSVAnalysis(uploaded_file) : 
+    df = pd.read_csv(uploaded_file)
+    left_column,right_column = st.columns(2)
+    with left_column:
+        st.header("Dataframe Head")
+        st.write(df.head())
+    with right_column:
+        st.header("Dataframe Tail")
+        st.write(df.tail())
+    save_uploadedfile(uploaded_file)
+    fileName = uploaded_file.name
+    st.write("fileName is " + fileName)
+    user_query = st.text_input('Enter your query')
+    agent = create_csv_agent(ChatOpenAI(temperature=0),fileName,verbose=True,max_iterations=100)
+    
+    if st.button("Answer My Question"):
+        st.write("Running the query " , user_query)
+        response = agent.run(user_query)
+        st.text_area('LLM Answer: ', value=response, height=400)
+        sound_file = BytesIO()
+        client = OpenAI()
+        aud = client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=response)
+        aud.stream_to_file("output.mp3")
+        st.audio("output.mp3")
+        history_func(response,user_query)
         
-        # text_input for the OpenAI API key (alternative to python-dotenv and .env)
-        api_key = st.text_input('OpenAI API Key:', type='password')
-        if api_key:
-            os.environ['OPENAI_API_KEY'] = api_key
+def MergePDFAnalysis(uploaded_files) :
+    raw_text = ''
+    for file in uploaded_files:
+        pdf_reader = PdfReader(file)
+        temp_text = ''
+        for i, page in enumerate(pdf_reader.pages):
+            text = page.extract_text()
+            if text:
+                temp_text += text
+        raw_text += temp_text        
 
-        # file uploader widget
-        uploaded_file = st.file_uploader('Upload a file:', type=['pdf', 'docx', 'txt'])
+    # Split the text into smaller chunks for indexing
+    text_splitter = CharacterTextSplitter(
+        separator="\n",
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,          
+    )
 
-        # chunk size number widget
-        chunk_size = 1000
+    texts = text_splitter.split_text(raw_text)
 
-        # k number input widget
-        k = 3
+    # Download embeddings from OpenAI      
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",     # Provide the pre-trained model's path
+        model_kwargs={'device':'cpu'}, # Pass the model configuration options
+        encode_kwargs={'normalize_embeddings': False})      
+    docsearch = FAISS.from_texts(texts, embeddings)
 
-        # add data button widget
-        add_data = st.button('Load Data', on_click=clear_history)
+    st.subheader("Enter a question:")
+    question = st.text_input("Question")
 
-        if uploaded_file and add_data: # if the user browsed a file
-            with st.spinner('Reading, chunking and embedding file ...'):
+    if st.button("Answer My Question"):
+        # Perform question answering
+        docs = docsearch.similarity_search(question)
+        chain = load_qa_chain(ChatOpenAI(temperature=0), chain_type="stuff")
+        answer = chain.run(input_documents=docs, question=question)
+        st.subheader("Answer:")
+        st.text_area('LLM Answer: ', value=answer, height=400)
+        sound_file = BytesIO()
+        client = OpenAI()
+        aud = client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=answer)
+        aud.stream_to_file("output.mp3")
+        st.audio("output.mp3")
+        history_func(answer,question)
+        
+        
+def ComparePDFAnalysis(uploaded_files) :
+    tools = []
+    llm = ChatOpenAI(temperature=0)
+    for file in uploaded_files:
+        st.write("File name is ", file.name)
+        save_uploadedfile(file)
+        loader = PyPDFLoader(file.name)
+        pages = loader.load_and_split()
+        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+        docs = text_splitter.split_documents(pages)
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-mpnet-base-v2",     # Provide the pre-trained model's path
+            model_kwargs={'device':'cpu'}, # Pass the model configuration options
+            encode_kwargs={'normalize_embeddings': False}) 
+        retriever = FAISS.from_documents(docs, embeddings).as_retriever()
+        function_name = file.name.replace('.pdf', '').replace(' ', '_')[:64]
+        tools.append(Tool(name=function_name,description=f"useful when you want to answer questions about {function_name}",func=RetrievalQA.from_chain_type(llm=llm, retriever=retriever)))
 
-                # writing the file from RAM to the current directory on disk
-                bytes_data = uploaded_file.read()
-                file_name = os.path.join('./', uploaded_file.name)
-                with open(file_name, 'wb') as f:
-                    f.write(bytes_data)
+    agent = initialize_agent(
+            agent=AgentType.OPENAI_FUNCTIONS,
+            tools=tools,
+            llm=llm,
+            verbose=True,
+        )
 
-                data = load_document(file_name)
-                chunks = chunk_data(file_name,data, chunk_size=chunk_size)
+    question = st.text_input("Question")    
+    if st.button("Answer My Question"):
+       st.write("Running the query")
+       response = agent.run(question)
+       st.text_area('LLM Answer: ', value=response, height=400)                
+       sound_file = BytesIO()
+       client = OpenAI()
+       aud = client.audio.speech.create(
+       model="tts-1",
+       voice="alloy",
+       input=response)
+       aud.stream_to_file("output.mp3")
+       st.audio("output.mp3")
+       history_func(response,question)
+       
+       
+        
+def TextAnalysis(uploaded_files) :
+    raw_text = ''
+    for file in uploaded_files: 
+        temp_text = file.read().decode("utf-8")
+        raw_text += temp_text    
 
-                # creating the embeddings and returning the Chroma vector store
-                vector_store = create_embeddings(file_name,chunks)
+    # Split the text into smaller chunks for indexing
+    text_splitter = CharacterTextSplitter(
+        separator="\n",
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+    )
+    texts = text_splitter.split_text(raw_text)
 
-                # saving the vector store in the streamlit session state (to be persistent between reruns)
-                st.session_state.vs = vector_store
-                st.success('File uploaded, chunked and embedded successfully.')
+    # Download embeddings from OpenAI
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",     # Provide the pre-trained model's path
+        model_kwargs={'device':'cpu'}, # Pass the model configuration options
+        encode_kwargs={'normalize_embeddings': False}) 
 
-    # user's question text input widget
-    q = st.text_input('Ask a question about the content of your file:')
-    
-    if q: # if the user entered a question and hit enter
-        if 'vs' in st.session_state: # if there's a vector store (user uploaded, split and embedded a file)
-            vector_store = st.session_state.vs
-            
-            answer = ask_and_get_answer(vector_store, q, k)
-    
-            # text area widget for the LLM answer
-            st.text_area('LLM Answer: ', value=answer["result"], height=400)
-            
-            # Audio area widget for the TTS part
-            sound_file = BytesIO()
-            client = OpenAI()
-            response = client.audio.speech.create(
-            model="tts-1",
-            voice="alloy",
-            input=answer["result"])
-            response.stream_to_file("output.mp3")
-            st.audio("output.mp3")
-            st.divider()
-    
-            # if there's no chat history in the session state, create it
-            if 'history' not in st.session_state:
-                st.session_state.history = ''
-    
-            # the current question and answer
-            value = f'Q: {q} \nA: {answer["result"]}'
-    
-            st.session_state.history = f'{value} \n {"-" * 100} \n {st.session_state.history}'
-            h = st.session_state.history
-    
-            # text area widget for the chat history
-            st.text_area(label='Chat History', value=h, key='history', height=400)
+    docsearch = FAISS.from_texts(texts, embeddings)
+
+    st.subheader("Enter a question:")
+    question = st.text_input("Question")
+
+    if st.button("Answer My Question"):
+        # Perform question answering
+        docs = docsearch.similarity_search(question)
+        chain = load_qa_chain(ChatOpenAI(temperature=0), chain_type="stuff")
+        answer = chain.run(input_documents=docs, question=question)
+        st.subheader("Answer:")
+        st.text_area('LLM Answer: ', value=answer, height=400)      
+        sound_file = BytesIO()
+        client = OpenAI()
+        aud = client.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=answer)
+        aud.stream_to_file("output.mp3")
+        st.audio("output.mp3")
+        history_func(answer,question)
+
+#=================
+# Answer Generation
+#=================
+
+        
+        
+if uploaded_files: 
+    if validateFormat(file_format,uploaded_files) :
+#        st.write("Format is valid")
+        if file_format=="CSV" :
+            if len(uploaded_files)>1 :
+                st.write("Only 1 CSV file can be uploded")
+            else :
+#                 st.write("CSV Analysis")
+                 for file in uploaded_files :
+                    CSVAnalysis(file)
+        elif file_format == "PDF" :
+            if len(uploaded_files) > 1 :
+                select = selectPDFAnalysis()
+                if(select=="Compare") :
+                    ComparePDFAnalysis(uploaded_files)
+                else :
+                    MergePDFAnalysis(uploaded_files)
+            else :
+#                st.write(" Single pdf analysis ")
+                MergePDFAnalysis(uploaded_files)
+        else :
+            TextAnalysis(uploaded_files)
+ #           st.write(" Text Analysis ")        
+    else :
+        st.write("Formats are not valid")
+        
+
+
