@@ -12,3 +12,6 @@ docx2txt
 PyPDF2 
 PdfReader
 faiss-gpu
+langchain_experimental
+sentence-transformers
+tabulate
