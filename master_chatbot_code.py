@@ -47,7 +47,7 @@ try :
     image_url = "logo-new.png"
     st.sidebar.image(image_url, caption="", use_column_width=True)
 except :   
-    image_url = "ai_logo.png"
+    image_url = "https://static.vecteezy.com/system/resources/previews/010/794/341/non_2x/purple-artificial-intelligence-technology-circuit-file-free-png.png"
     st.sidebar.image(image_url, caption="", use_column_width=True)
 
 #=================
