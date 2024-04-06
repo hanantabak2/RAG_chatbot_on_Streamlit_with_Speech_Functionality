@@ -34,7 +34,7 @@ from io import BytesIO
 page_bg_img = '''
 <style>
 .stApp  {
-background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url("https://www.mytgs.io/images/aiSignal/Final.svg");
+background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url("https://img.freepik.com/premium-photo/colorful-bright-neon-glowing-signal-spectrum-graphic-equalizer-background-ai-generated-image_548729-4811.jpg");
 background-size: cover;
 }
 </style>
