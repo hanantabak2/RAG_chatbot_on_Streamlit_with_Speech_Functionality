@@ -97,7 +97,7 @@ def selectPDFAnalysis() :
        return "Merge"
 
 def save_uploadedfile(uploadedfile):
-    """
+     """
     Saves the uploaded file to the current directory.
 
     Args:
@@ -105,7 +105,7 @@ def save_uploadedfile(uploadedfile):
 
     Returns:
         str: A success message indicating the file has been saved.
-    """
+     """
      with open(os.path.join(uploadedfile.name),"wb") as f:
          f.write(uploadedfile.getbuffer())
      return st.success("Saved File")           
