@@ -120,7 +120,7 @@ unique_id = uuid4().hex[0:8]
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = f"LangSmith - AI Chatbot with Text to Speech - {unique_id}"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-os.environ["LANGCHAIN_API_KEY"] = "${{ secrets.langsmith_key }}"
+os.environ["LANGCHAIN_API_KEY"] = "${{ secrets.LANGSMITH_KEY }}"
 
 
 #=================
