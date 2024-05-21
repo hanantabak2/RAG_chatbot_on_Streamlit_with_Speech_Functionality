@@ -120,10 +120,13 @@ def save_uploadedfile(uploadedfile):
 
 unique_id = uuid4().hex[0:8]
 
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = f"LangSmith - AI Chatbot with Text to Speech - {unique_id}"
-os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+# os.environ["LANGCHAIN_TRACING_V2"] = "true"
+# os.environ["LANGCHAIN_PROJECT"] = f"LangSmith - AI Chatbot with Text to Speech - {unique_id}"
+# os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 LANGSMITH_KEY = os.get_env["LANGSMITH_KEY"]
+LANGCHAIN_TRACING_V2 = os.get_env["LANGCHAIN_TRACING_V2"]
+LANGCHAIN_PROJECT = os.get_env["LANGCHAIN_PROJECT"]
+LANGCHAIN_ENDPOINT = os.get_env["LANGCHAIN_ENDPOINT"]
 
 
 #=================
