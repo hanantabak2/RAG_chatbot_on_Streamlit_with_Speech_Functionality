@@ -25,6 +25,9 @@ from langchain.agents import Tool
 from langchain.embeddings import HuggingFaceEmbeddings
 from io import BytesIO
 from uuid import uuid4
+from dotenv import load_env
+
+load_env() # get environment variables from .env file
 
 #=================
 # Background Image , Chatbot Title and Logo
@@ -120,7 +123,7 @@ unique_id = uuid4().hex[0:8]
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = f"LangSmith - AI Chatbot with Text to Speech - {unique_id}"
 os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-os.environ["LANGSMITH_KEY"] = LANGSMITH_KEY
+LANGSMITH_KEY = os.get_env["LANGSMITH_KEY"]
 
 
 #=================
