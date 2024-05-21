@@ -41,7 +41,7 @@ background-size: cover;
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 
-st.title("Gen AI based Insight Generator")
+st.title("Gen AI RAG Chatbot")
 try :
     image_url = "logo-new.png"
     st.sidebar.image(image_url, caption="", use_column_width=True)
