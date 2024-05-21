@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: [ "main" ]
 env:
-LANGSMITH_KEY: ${{ secrets.LANGSMITH_KEY }}
+ LANGSMITH_KEY: ${{ secrets.LANGSMITH_KEY }}
 permissions:
   contents: read
 
