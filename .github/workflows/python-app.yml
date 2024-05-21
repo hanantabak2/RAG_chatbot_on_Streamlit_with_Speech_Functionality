@@ -24,8 +24,8 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install dependencies
-    env:
-      LANGSMITH_KEY: ${{ secrets.LANGSMITH_KEY }}
+      env:
+        LANGSMITH_KEY: ${{ secrets.LANGSMITH_KEY }}
       run: |
         python master_chatbot_code.py
         python -m pip install --upgrade pip
