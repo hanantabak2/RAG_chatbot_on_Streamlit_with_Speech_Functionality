@@ -87,14 +87,14 @@ def selectPDFAnalysis() :
     Returns:
         str: The selected analysis type ("Compare" or "Merge").
     """
-        type_pdf = st.selectbox("Select Anaylsis Type on PDFs", ["Compare","Merge"])
+    type_pdf = st.selectbox("Select Anaylsis Type on PDFs", ["Compare","Merge"])
 
-        if type_pdf=="Compare" :
-           st.write("Analysis Comparing PDFs")
-           return "Compare"
-        else :
-           st.write("Analysis Merging PDFs")  
-           return "Merge"
+    if type_pdf=="Compare" :
+       st.write("Analysis Comparing PDFs")
+       return "Compare"
+    else :
+       st.write("Analysis Merging PDFs")  
+       return "Merge"
 
 def save_uploadedfile(uploadedfile):
     """
