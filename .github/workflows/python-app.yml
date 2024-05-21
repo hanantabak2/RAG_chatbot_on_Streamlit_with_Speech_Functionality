@@ -8,7 +8,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
+env:
+LANGSMITH_KEY: ${{ secrets.LANGSMITH_KEY }}
 permissions:
   contents: read
 
@@ -28,7 +29,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        TEST_SECRET=${{ secrets.LANGSMITH_KEY }} python -c 'import os; print(os.environ["TEST_SECRET"])'
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
