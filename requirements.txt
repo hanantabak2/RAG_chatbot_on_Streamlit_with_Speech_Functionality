@@ -15,3 +15,4 @@ faiss-gpu
 langchain_experimental
 sentence-transformers
 tabulate
+uuid
