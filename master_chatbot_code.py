@@ -25,9 +25,9 @@ from langchain.agents import Tool
 from langchain.embeddings import HuggingFaceEmbeddings
 from io import BytesIO
 from uuid import uuid4
-from dotenv import load_env
+import dotenv
 
-load_env() # get environment variables from .env file
+dotenv.load_env() # get environment variables from .env file
 
 #=================
 # Background Image , Chatbot Title and Logo
