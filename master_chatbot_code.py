@@ -111,23 +111,7 @@ def save_uploadedfile(uploadedfile):
      """
      with open(os.path.join(uploadedfile.name),"wb") as f:
          f.write(uploadedfile.getbuffer())
-     return st.success("Saved File")           
-
-#=================
-# Tracing in Langsmith
-#=================
-
-
-unique_id = uuid4().hex[0:8]
-
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = f"LangSmith - AI Chatbot with Text to Speech - {unique_id}"
-os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
-os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGSMITH_KEY")
-
-# LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2")
-# LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT")
-# LANGCHAIN_ENDPOINT = os.getenv("LANGCHAIN_ENDPOINT")
+     return st.success("Saved File")
 
 
 #=================
